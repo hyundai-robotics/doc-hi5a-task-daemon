@@ -33,7 +33,7 @@ PLCTrack, Tunning, TOOLCHNG, SpeedCtrl, LoadEst, SEALER, UDPsnd, Tool, 등...
 - 아래와 같은 로봇 응용 명령문들은 대부분 동작하지 않습니다.
 
 ```python
-ARCON, LVSON, MULTPASS, RHemming, WaitSensor, HSensON
+ARCON, LVSON, MULTPASS, RHemming, WaitSensor, HSensON, 등...
 ```
 
 - TaskDaemon으로 실행 중인 JOB을 편집하면, 경우에 따라 해당 태스크의 daemon 실행은 정지할 수도 있습니다.
