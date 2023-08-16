@@ -1,4 +1,4 @@
-﻿# Hi6 로봇제어기 기능설명서 - 내장PLC (Embedded PLC)
+﻿# Hi6 로봇제어기 기능설명서 - 태스크 데몬 (Task Daemon)
 
 {% hint style="warning" %}
 본 제품 설명서에서 제공되는 정보는 현대로보틱스의 자산입니다.
@@ -11,5 +11,5 @@
 
 
 
-**Copyright ⓒ 2022 by Hyundai Robotics**
+**Copyright ⓒ 2023 by HD Hyundai Robotics**
 {% endhint %}

@@ -1,7 +1,7 @@
-{
+﻿{
     "langCode": "ko",
-    "series": "현대로봇 Hi6 제어기",
-    "title": "기능설명서 - 내장PLC (Embedded PLC)",
+    "series": "현대로봇 Hi5a 제어기",
+    "title": "기능설명서 - 태스크 데몬 (Task Daemon)",
     "publisher": "현대로보틱스",
     "tocTitle": "목차",
     "tocTitleElements": "[ \"h1\", \"h2\" ]"
