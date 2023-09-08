@@ -1,122 +1,123 @@
-﻿# Hi6 로봇제어기 기능설명서 - 태스크 데몬 (Task Daemon)
+﻿# Hi5a Robot Controller Function Manual - Task Daemon
 
 {% hint style="warning" %}
-본 제품 설명서에서 제공되는 정보는 현대로보틱스의 자산입니다.
+The information provided in this product manual is the property of Hyundai Robotics.
 
-현대로보틱스의 서면에 의한 동의 없이 전부 또는 일부를 무단 전재 및 재배포할 수 없으며, 제3자에게 제공되거나 다른 목적에 사용할 수 없습니다.
+It cannot be reproduced or redistributed in part or whole without written consent from Hyundai Robotics, and it cannot be provided to third parties or used for other purposes.
 
 
 
-본 설명서는 사전 예고 없이 변경될 수 있습니다.
+The manual is subject to change without prior notification.
 
 
 
 **Copyright ⓒ 2023 by HD Hyundai Robotics**
 {% endhint %}
-# 1. 개요
+# 1. Overview
 
 {% hint style="info" %}
-이 기능은 V40.27-17 및 이후 버전부터 지원됩니다.
+This feature is supported from V40.27-17 and later versions.
 {% endhint %}
 
-일반적으로 Hi5a 제어기의 JOB 프로그램은 자동모드일 때, 혹은 수동모드이면서 StepFWD를 누르고 있을 때만 수행됩니다.
+In general, the JOB program on the Hi5a controller runs only when in automatic mode or when `StepFWD` is pressed in manual mode.  
 
-그러나 때로는, 이러한 재생 조건이 아닐 때에도, 백그라운드에서 JOB프로그램을 실행해야 할 경우가 있습니다. 
-가령, 제어기의 현재 상태를 외부로 보고하는 네트워크 서비스 기능을 JOB으로 구현했다면, 이 JOB은 위와 같은 재생 조건과 무관하게 항상 실행되고 있어야 유용할 것입니다.
+Sometimes, however, you have to run a JOB program in the background, even if it's not under these playback conditions.  
+For example, if JOB has implemented a network service function that reports the current state of the controller to the outside, this JOB should always be running regardless of the playback conditions above.
 
-태스크 데몬 (Task Daemon) 기능을 활용하여, 특정한 JOB을 원하는 태스크에 할당하고 이를 재생 조건과 무관하게 항상 실행할 수 있습니다.
+The Task Daemon feature allows you to assign a specific JOB to the desired task and always run it regardless of the playback conditions.
+
+
 
 {% hint style="info" %}
-데몬 (daemon)이란, 보통 백그라운드에서 계속 수행되면서 주로 외부 시스템으로부터의 서비스 요청을 처리해주는 프로그램을 의미하는 용어입니다.
+
+`Daemon` is a term that refers to a program that usually continues to perform in the background and primarily handles service requests from external systems.
+
 {% endhint %}
 
 {% hint style="warning" %}
 
-TaskDaemon 기능은 아래와 같은 제약이 있습니다.
+The TaskDaemon feature has the following limitations;
 
-- MOVE 등 스텝 명령문은 에러 없이 무시됩니다. 즉, 로봇이나 부가축 장치를 움직일 수는 없습니다.
+- Step statements such as MOVE are ignored without errors. You can't move a robot or an additive-axes devices.
 
-- 태스크 0이나 멀티태스크 기능에 의해 사용 중인 태스크 번호는 데몬으로 사용할 수 없습니다.
+- Task 0 or tasks used in the multi-task feature does not allowed to be used as a daemon.
 
-- 아래와 같은 기타 명령문들은 대부분 동작하지 않습니다.
+- Most of the etc. statements below do not work.
 
 ```python
 CALLPR, RINT, RINTA, COWORK  GUNCHNG AXISCTRL SELPTNO , FILTER, BrakeCheck, BrakeTest, GasPTest, ServoFree, SoftXYZ, OnLTrack, ForceCtrl, SoftJoint, 
-PLCTrack, Tunning, TOOLCHNG, SpeedCtrl, LoadEst, SEALER, UDPsnd, Tool, 등...
+PLCTrack, Tunning, TOOLCHNG, SpeedCtrl, LoadEst, SEALER, UDPsnd, Tool, etc...
 ```
 
-- 아래와 같은 로봇 응용 명령문들은 대부분 동작하지 않습니다.
+- Most of the robot application statements as below do not work.
 
 ```python
 ARCON, LVSON, MULTPASS, RHemming, WaitSensor, HSensON, 등...
 ```
 
-- TaskDaemon으로 실행 중인 JOB을 편집하면, 경우에 따라 해당 태스크의 daemon 실행은 정지할 수도 있습니다.
+- If you edit a JOB running as TaskDaemon, you might stop running daemon for that task in some cases.
 
 {% endhint %}
-# 2. 사용 방법
+# 2. How to use
+# 2.1. Setting
 
-# 2.1. 설정
+Select `[F2: Systems] - 4: Application Parameters - 33: Task Daemon`.
 
-`[F2: 시스템] - 4: 응용 파라미터 - 33: 태스크 데몬`을 선택하십시오.
-
-![태스크 데몬 메뉴](../_assets/menu.png)
+![Task Daemon menuu](../_assets/menu.png)
 
 <br>
 
-아래와 같은 설정화면이 열립니다.  
-태스크 1 ~ 태스크 7에 대한 설정이 가능합니다. (태스크 0은 데몬으로 사용할 수 없습니다.)
+The setup screen below opens.  
+Settings are available for Task 1 ~ Task 7. (Task 0 cannot be used as a daemon.)
 
-- `JOB 번호` 항목에 JOB 번호를 입력하면, 그 번호를 메인 프로그램으로 하여 데몬으로 실행하도록 태스크가 설정됩니다.  
-0으로 설정되어 있으면, 해당 태스크는 데몬으로 사용하지 않습니다. 즉 데몬 OFF 상태입니다.
+- When you enter a JOB number in the `JOB number` entry, the task is set to run as a daemon with that number as the main program.  
+If set to 0, the task is not used as a daemon, i.e. the `daemon OFF` state.
 
-- `자동 실행`을 체크하면, 설정을 완료하거나 제어기를 부팅했을 때 자동으로 데몬이 실행됩니다.
-- `반복`을 체크하면, JOB CYCLE이 완료되었을 때 처음부터 다시 반복 수행됩니다. 즉, `조건설정 - 동작 사이클` 설정을 `반복`으로 설정한 것과 같은 개념입니다.
+- If you check `Auto.run`, the daemon will run automatically when you complete the setup or boot the controller.
+- If you check `Repeat`, it will repeat from the beginning when JOB CYCLE is completed. This is the same concept as setting the `Condition setting - Operation Cycle` setting to `Continuous`.
 
-- `상태` 항목에는 태스크의 현재 상태와 함께 괄호 안에 현재 프로그램 카운터(프로그램 번호/스텝 번호/펑션 번호)가 표시됩니다.
+- The `Status` item displays the current program counter (Program number/Step number/Function number) in parentheses, along with the current status of the task.
 
-  - OFF (꺼짐) : 데몬으로 사용하지 않는 상태입니다.
-  - OCCUPIED (점유) : 멀티태스크 기능에 의해 점유되어 사용 중인 태스크입니다. 데몬으로 사용할 수 없습니다.
-  - READY (준비) : 프로그램 헤더에서 기동(START) 되기를 기다리는 상태입니다.
-  - RUN (실행) : 데몬으로 재생 중인 상태입니다.
-  - STOP (정지) : 실행이 정지된 상태입니다.
-  - WAITING (대기) : DELAY문이나 WAIT문, INPUT문 등에서 대기 중인 상태입니다.
-  - ERROR (에러) : 에러가 발생한 상태입니다. 에러코드가 같이 표시되기도 합니다.
-  - END (종료) : JOB CYCLE이 완료된 상태입니다.
+  - OFF: Not in use as a daemon.
+  - OCCUPIED: A task occupied and in use by a multi-task function. Not available as daemon.
+  - READY : The state of waiting to be STARTed on the program header.
+  - RUN: The state of running as a daemon.
+  - STOP : Running is stopped.
+  - WAITING: Waiting by the DELAY, WAIT, or INPUT statement.
+  - ERROR: An error has occurred. An error code may also be displayed.
+  - END : JOB CYCLE is complete.
 
-![태스크 데몬 설정 화면](../_assets/setting.png)
+![Task daemon setting screen](../_assets/setting.png)
 
-하단의 F키들로 현재 커서가 위치한 태스크에 대해 수동 조작을 할 수 있습니다.
+The F keys at the bottom allow manual operation of the task where the cursor is currently located.
 
-- `[F1: 리셋]` : 선택된 태스크를 정지시키고, 리셋을 수행합니다. R0[ENTER]를 수행한 것과 같은 개념입니다. 모든 호출 정보와 지역변수가 클리어되고, 프로그램 카운터는 메인 프로그램 헤더 위치에 놓입니다.
-- `[F2: 실행]` : STOP 혹은 READY 나 END 상태의 태스크 데몬을 기동시킵니다. START (기동) 버튼을 누르는 것과 같은 개념입니다.
-- `[F3: 정지]` : RUN 혹은 WAITING 상태의 태스크 데몬을 정지시킵니다. STOP (정지) 버튼을 누르는 것과 같은 개념입니다.
+- `[F1: Reset]` : Stops the selected task and performs a reset. It's the same concept as performing `R0[ENTER]`. All call information and local variables are cleared, and the program counter is placed on the main program header position.
+- `[F2: Execute]` : Run the task daemon in the STOP, READY or END state. It's the same concept as pressing the `START` button.
+- `[F3: Stop]` : Stops the task daemon in the RUN or WAITING state. It's the same concept as pressing the `STOP` button.
 
-- `[F7: 완료]` : 설정을 저장하고, 설정 화면을 닫습니다. `자동 실행`으로 설정한 태스크 데몬은 실행을 시작합니다.
-# 2.2. 모니터링
+- `[F7: Complete]` : Save the settings and close the settings screen. The task daemon that you set to `Auto.run` starts running.
+# 2.2. Monitoring
 
-![태스크 데몬 모니터링](../_assets/monitoring.png)
-
-`창조정 - [F1: 내용선택] - 18: 멀티태스킹 상태` 모니터링 창에서 태스크 데몬의 현재 프로그램 카운터를 확인할 수 있습니다.
-# 2.3. JOB 편집
-
-태스크 데몬의 메인 JOB 프로그램이나 서브 JOB 프로그램들은 자유롭게 편집할 수 있습니다. 다만 이 프로그램들이 호출 스택에 있을 때(즉, 실행 중에 있을 때)에 명령문 삽입/삭제 혹은 IF문 편집을 수행하면, 아래와 같은 확인 대화상자가 나타납니다.
-
-![정지 및 리셋 확인 대화상자](../_assets/stop_reset_dialog.png)
-
-`[ENTER]` 키를 누르면, 해당 태스크 데몬이 정지 및 리셋됩니다. `[ESC]` 키를 누르면, 편집이 취소됩니다.
-
-또한 호출 스택에 있는 JOB 프로그램을 삭제하면, 해당 daemon 실행이 동작이 중단되고 초기화됩니다.
-# 별첨
-
-  
+![Task daemon monitoring](../_assets/monitoring.png)
 
 
-# 산업안전보건기준에 관한 규칙 및 안전검사 고시
+You can view the current program counters for the task daemon in the `[R2: Window adjustment] - [F1: Content selection] - 18: Multi-tasking state`
+# 2.3. JOB editing
 
-당해 산업용 로봇은 산업안전보건기준에 관한 규칙 및 안전검사 고시(검사 대상일 경우)의 검사 기준을 고려하여 설치하여야 한다.
+The main JOB programs or sub-JOB programs in the task daemon are freely editable. However, if you insert/delete a command statement or edit an IF statement when these programs are in the call stack (i.e., running), the following confirmation dialog box appears.
 
-"[산업안전보건기준에 관한 규칙](https://hrbook-hrc.web.app/#/view/rules-on-occupational-safety-and-health-standards/korean/README)"
-# 품질보증
+![Stop or reset confirmation dialog](../_assets/stop_reset_dialog.png)
 
-"[품질보증](https://hrbook-hrc.web.app/#/view/quality-assurance/korean/README)"
+Pressing the `[ENTER]` key stops and resets the task daemon. Press the `[ESC]` key to cancel the edit.
+
+And, if you delete a JOB program in the call stack, its daemon execution is interrupted and initialized.
+# Appendices
+
+  # Rules on Occupational Safety and Health Standards, and Notice for Safety Inspection
+
+The industrial robot should be installed in consideration of the inspection standards both of the Rules on Occupational Safety and Health Standards and of the Notice for Safety Inspection \(if subject to inspection\).
+
+"[Rules on Occupational Safety and Health Standards](https://hrbook-hrc.web.app/#/view/rules-on-occupational-safety-and-health-standards/english/README)"
+# Quality Assurance
+
+"[Quality Assurance](https://hrbook-hrc.web.app/#/view/quality-assurance/english/README)"
